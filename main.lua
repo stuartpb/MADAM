@@ -144,7 +144,7 @@ function main(web, req)
     -- empty messages
     if msg=="" then
       if not username then
-        respond('Text "LOLOL name" followed by your name!')
+        respond('Text "MADAM NAME <your name>"! ')
       else
         respond(atk('Y helo thar, @!',username))
       end
@@ -152,8 +152,8 @@ function main(web, req)
     -- Other message situations:
 
     --message starts with "name"
-    elseif msg:find"^name" then
-      local uname=msg:match"^name%s*(.-)$"
+    elseif msg:find"^[Nn][Aa][Mm][Ee]" then
+      local uname=msg:match"^[Nn][Aa][Mm][Ee]%s*(.-)$"
       if uname then
         if uname:find"\n" then
           uname=uname:match"^(.-)\n"
@@ -170,11 +170,11 @@ function main(web, req)
         end
       else
         respond("Didn't get a name. "..
-        'Try just a space between "lolol name" and your name.')
+        'Try just a space between "MADAM NAME" and your name.')
       end
 
     --message is one of the odd things I intercepted in the original
-    --run off of a laptop at Charlie's
+    --run of LOLOL off of a laptop at Charlie's
     elseif msg=="matt stupid" then
       respond"So I've heard."
 

@@ -84,7 +84,7 @@ function main(web, req)
     lmc.kwd = kwd
     lmc.signed = signed
     -- Don't log valid signatures.
-    if not signed then lmc.sig = sig
+    if not signed then lmc.sig = sig end
 
     mongodb:insert('logs',lmc)
   end --- logging ----
@@ -146,7 +146,7 @@ function main(web, req)
   -- Request handling
   else
     -- If this is somehow not a REQ, something's up
-    if act=~"REQ" then
+    if act ~= "REQ" then
       moai.log("Unrecognized action type "..act,"WARN")
     end
 
@@ -170,6 +170,7 @@ function main(web, req)
         if uname:find"\n" then
           uname=uname:match"^(.-)\n"
         end
+
         if uname:len() > 50 then
           respond"Holy cow! Let's keep it under 50 characters, OK?"
         else

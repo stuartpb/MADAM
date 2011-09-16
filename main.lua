@@ -85,26 +85,38 @@ function main(web, req)
     lmc.signed = signed
     -- Don't log valid signatures.
     if not signed then lmc.sig = sig
+
+    mongodb:insert('logs',lmc)
   end --- logging ----
 
   ------ User data manipulation functions ------
-  local function get(key)
-    local cursor = mongodb:query('users', {uid = uid})
-    local usertable = cursor:next()
-    if not usertable then
-      --this technically shouldn't happen, but just be chill
-      return nil
+
+  local user = {}
+  function user.get(key)
+    if signed then
+      local cursor = mongodb:query('users', {uid = uid})
+      local usertable = cursor:next()
+      if not usertable then
+        --this technically shouldn't happen, but just be chill
+        return nil
+      else
+        return usertable[key]
+      end
     else
-      return usertable[key]
+      return nil
     end
   end
 
-  local function set(key, val)
-    mongodb:update('users', {uid = uid}, {['$set']={[key]=val}}, true)
+  function user.set(key, val)
+    if signed and tel~="Simluator" then
+      mongodb:update('users', {uid = uid}, {['$set']={[key]=val}}, true)
+    end
   end
 
-  local function unset(key)
-    mongodb:update('users', {uid = uid}, {['$unset']={[key]=1}}, true)
+  function user.unset(key)
+    if signed and tel~="Simluator" then
+      mongodb:update('users', {uid = uid}, {['$unset']={[key]=1}}, true)
+    end
   end
 
   ------ Local toolbox ------
@@ -121,14 +133,14 @@ function main(web, req)
 
   ------ Action ------
   -- Save this user's telephone number.
-  set("tel",tel)
+  user.set("tel",tel)
 
   -- Subscription handling
   if act=="SUB" then
-    set("subscribed",true)
+    user.set("subscribed",true)
     respond""
   elseif act=="UNSUB" then
-    unset("subscribed")
+    user.unset("subscribed")
     respond""
 
   -- Request handling
@@ -139,7 +151,7 @@ function main(web, req)
     end
 
     -- Get the given name for this user, if they've given one.
-    local username = get("name")
+    local username = user.get("name")
 
     -- empty messages
     if msg=="" then
@@ -161,8 +173,8 @@ function main(web, req)
         if uname:len() > 50 then
           respond"Holy cow! Let's keep it under 50 characters, OK?"
         else
-          set("name",uname)
           local response = atk("Hello, @!",uname)
+          user.set("name",uname)
           if username then
             response = response .. atk(" You are cooler than @.",username)
           end
@@ -170,7 +182,7 @@ function main(web, req)
         end
       else
         respond("Didn't get a name. "..
-        'Try just a space between "MADAM NAME" and your name.')
+          'Try just a space between "MADAM NAME" and your name.')
       end
 
     --message is one of the odd things I intercepted in the original
@@ -180,7 +192,10 @@ function main(web, req)
 
     --end of elseifs - default case
     else
-      local response = atk("And @ to you, too",gsub(msg,'^%p*(.-)%p*$',"%1"))
+      --respond with the sent message stripped of punctuation,
+      --turned arund
+      local response = atk("And @ to you, too",
+        gsub(msg,'^%p*(.-)%p*$',"%1"))
       if username then response = response..atk(", @",username) end
       response = response .. '!'
       respond(response)
